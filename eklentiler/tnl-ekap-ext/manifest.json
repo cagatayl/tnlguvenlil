@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "TNL EKAP Botu",
+  "version": "1.0.0",
+  "description": "EKAP üzerinden canlı ihaleleri çekip yerel TNL Muhasebe sunucusuna aktarır.",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://localhost:3000/*",
+    "*://ekap.kik.gov.tr/*",
+    "*://ekapv2.kik.gov.tr/*",
+    "*://*.ilan.gov.tr/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://ekap.kik.gov.tr/*",
+        "*://ekapv2.kik.gov.tr/*",
+        "*://*.ilan.gov.tr/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "İhaleleri TNL'ye Gönder"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}
