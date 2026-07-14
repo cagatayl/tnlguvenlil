@@ -108,6 +108,7 @@ export interface Yapilacak {
   onayBekliyor?: boolean;
   teknikNot?: string;
   teknikTarih?: string;
+  etiket?: string;
 }
 
 export interface Not {

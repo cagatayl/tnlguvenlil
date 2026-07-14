@@ -16,13 +16,13 @@ export default function PlanlamaPage() {
   const [showTechModal, setShowTechModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
   const [techNote, setTechNote] = useState('');
-  const [form, setForm] = useState({ baslik: '', tarih: '', atanan: '', aciliyet: 'Normal' });
+  const [form, setForm] = useState({ baslik: '', tarih: '', atanan: '', aciliyet: 'Normal', etiket: 'Genel' });
 
   const handleSave = () => {
     if (!form.baslik) return alert('Başlık zorunludur!');
     addYapilacak({ id: 'TSK-' + Date.now(), ...form, tamamlandi: false });
     setShowModal(false);
-    setForm({ baslik: '', tarih: '', atanan: '', aciliyet: 'Normal' });
+    setForm({ baslik: '', tarih: '', atanan: '', aciliyet: 'Normal', etiket: 'Genel' });
   };
 
   const handleTechSave = () => {
@@ -34,11 +34,61 @@ export default function PlanlamaPage() {
     setTechNote('');
   };
 
-  const tamamlandi = yapilacaklar.filter((t) => t.tamamlandi);
-  const bekleyen = yapilacaklar.filter((t) => !t.tamamlandi);
+  // Teknik ekip ise, sadece Teknik Ekip etiketli görevleri görsün
+  const gorunenGorevler = currentUser?.role === 'tekniker' 
+    ? yapilacaklar.filter(t => t.etiket === 'Teknik Ekip') 
+    : yapilacaklar;
+
+  const tamamlandi = gorunenGorevler.filter((t) => t.tamamlandi);
+  const bekleyen = gorunenGorevler.filter((t) => !t.tamamlandi);
 
   return (
     <AppShell>
+      <style dangerouslySetInnerHTML={{__html: `
+        @media (max-width: 768px) {
+          .planlama-table, .planlama-table thead, .planlama-table tbody, .planlama-table th, .planlama-table td, .planlama-table tr {
+            display: block;
+          }
+          .planlama-table thead tr {
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+          }
+          .planlama-table tr {
+            margin-bottom: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            background: rgba(0,0,0,0.2);
+            padding: 12px;
+          }
+          .planlama-table td {
+            border: none;
+            position: relative;
+            padding-left: 50% !important;
+            text-align: right !important;
+            min-height: 30px;
+          }
+          .planlama-table td:before {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            width: 45%;
+            padding-right: 10px;
+            white-space: nowrap;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-secondary);
+            content: attr(data-label);
+          }
+          .planlama-table td:first-child {
+            padding-left: 12px !important;
+            text-align: left !important;
+          }
+          .planlama-table td:first-child:before {
+            content: none;
+          }
+        }
+      `}} />
       <div className="page-header">
         <div>
           <h1 className="page-title">Planlama & Şantiye Takibi</h1>
@@ -53,7 +103,7 @@ export default function PlanlamaPage() {
 
       <div className="glass-card table-card">
         <div className="table-responsive">
-          <table className="data-table">
+          <table className="data-table planlama-table">
             <thead>
               <tr>
                 <th style={{ width: 40 }}></th>
@@ -65,17 +115,17 @@ export default function PlanlamaPage() {
               </tr>
             </thead>
             <tbody>
-              {yapilacaklar.length === 0 ? (
+              {gorunenGorevler.length === 0 ? (
                 <tr>
                   <td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40 }}>
                     Henüz görev yok. Yeni görev ekleyin.
                   </td>
                 </tr>
               ) : (
-                yapilacaklar.map((t) => (
+                gorunenGorevler.map((t) => (
                   <React.Fragment key={t.id}>
                   <tr style={{ opacity: t.tamamlandi ? 0.55 : 1 }}>
-                    <td>
+                    <td data-label="">
                       {currentUser?.role !== 'tekniker' ? (
                         <input
                           type="checkbox"
@@ -87,14 +137,19 @@ export default function PlanlamaPage() {
                         <i className={`bx ${t.tamamlandi ? 'bx-check-square' : 'bx-square'}`} style={{ color: t.tamamlandi ? '#10b981' : 'var(--text-muted)' }} />
                       )}
                     </td>
-                    <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{t.tarih}</td>
-                    <td>
-                      <strong style={{ textDecoration: t.tamamlandi ? 'line-through' : 'none' }}>
+                    <td data-label="Tarih" style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{t.tarih}</td>
+                    <td data-label="Başlık & Şantiye">
+                      <strong style={{ textDecoration: t.tamamlandi ? 'line-through' : 'none', display: 'block' }}>
                         {t.baslik}
                       </strong>
+                      {t.etiket && (
+                        <span style={{ fontSize: '0.7rem', color: '#3b82f6', background: 'rgba(59,130,246,0.1)', padding: '2px 6px', borderRadius: 4, marginTop: 4, display: 'inline-block' }}>
+                          #{t.etiket}
+                        </span>
+                      )}
                     </td>
-                    <td style={{ color: 'var(--text-secondary)' }}>{t.atanan}</td>
-                    <td>
+                    <td data-label="Atanan Kişi" style={{ color: 'var(--text-secondary)' }}>{t.atanan}</td>
+                    <td data-label="Durum">
                       {t.tamamlandi ? (
                         <span className="badge badge-green">Tamamlandı</span>
                       ) : t.onayBekliyor ? (
@@ -106,8 +161,8 @@ export default function PlanlamaPage() {
                       )}
                     </td>
                     {currentUser?.role !== 'tekniker' ? (
-                      <td>
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      <td data-label="İşlem">
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                           {t.onayBekliyor ? (
                             <>
                               <button className="btn btn-success btn-sm" onClick={() => approveYapilacakOnay(t.id)}>Onayla</button>
@@ -126,10 +181,11 @@ export default function PlanlamaPage() {
                         </div>
                       </td>
                     ) : (
-                      <td>
+                      <td data-label="İşlem">
                         {!t.tamamlandi && !t.onayBekliyor && (
                           <button 
                             className="btn btn-primary btn-sm" 
+                            style={{ width: '100%' }}
                             onClick={() => { setSelectedTask(t.id); setShowTechModal(true); }}
                           >
                             İş Bitti Bildir
@@ -176,6 +232,16 @@ export default function PlanlamaPage() {
               <div className="form-group">
                 <label className="form-label">Tarih</label>
                 <input type="date" className="form-input" value={form.tarih} onChange={(e) => setForm({ ...form, tarih: e.target.value })} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Görüntüleme İzni (Etiket)</label>
+                <select className="form-select" value={form.etiket} onChange={(e) => setForm({ ...form, etiket: e.target.value })}>
+                  <option>Genel</option>
+                  <option>Teknik Ekip</option>
+                  <option>Sevgi</option>
+                  <option>Çağatay</option>
+                </select>
+                <small style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>Teknik ekip sadece 'Teknik Ekip' etiketli olanları görür.</small>
               </div>
               <div className="form-group">
                 <label className="form-label">Atanan Kişi/Ekip</label>
