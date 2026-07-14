@@ -31,6 +31,7 @@ interface AuthState {
   logout: () => void;
   clearError: () => void;
   setLocation: (loc: LocationData) => void;
+  setUserLocationsMap: (map: Record<string, LocationData>) => void;
   logActivity: (action: string, page: string) => void;
   can: (permission: Permission) => boolean;
 }
@@ -95,6 +96,8 @@ export const useAuthStore = create<AuthState>()(
           }
         }));
       },
+
+      setUserLocationsMap: (map: Record<string, LocationData>) => set({ userLocationsMap: map }),
 
       logActivity: (action: string, page: string) => {
         const user = get().currentUser;

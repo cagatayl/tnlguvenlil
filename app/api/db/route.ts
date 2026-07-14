@@ -13,11 +13,27 @@ export async function GET() {
       console.warn('Redis URL is not configured');
       return NextResponse.json({ error: 'Veritabanı yapılandırması eksik (KV_REST_API_REDIS_URL bulunamadı)' }, { status: 500 });
     }
-    const data = await redis.get(DB_KEY);
-    // data is a JSON string in ioredis, so we need to parse it,
-    // but if it's already parsed, we handle it
+    const [data, locationsData] = await Promise.all([
+      redis.get(DB_KEY),
+      redis.hgetall('tnl_locations')
+    ]);
+    
     const parsedData = data ? JSON.parse(data) : {};
-    return NextResponse.json(parsedData);
+    
+    // Konum verilerini parse et (Her bir değer JSON string)
+    const userLocationsMap: Record<string, any> = {};
+    if (locationsData) {
+      for (const [userId, locationStr] of Object.entries(locationsData)) {
+        try {
+          userLocationsMap[userId] = JSON.parse(locationStr);
+        } catch {}
+      }
+    }
+    
+    return NextResponse.json({
+      ...parsedData,
+      userLocationsMap
+    });
   } catch (error) {
     console.error('Redis GET Error:', error);
     return NextResponse.json({ error: 'Veritabanına ulaşılamadı' }, { status: 500 });
@@ -30,8 +46,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Veritabanı yapılandırması eksik' }, { status: 500 });
     }
     const body = await req.json();
-    // Save as JSON string
-    await redis.set(DB_KEY, JSON.stringify(body));
+    
+    // Eğer istekte konum bilgisi varsa, onu HSET ile kaydet
+    if (body._userLocation && body._userId) {
+      await redis.hset('tnl_locations', body._userId, JSON.stringify(body._userLocation));
+      // Konum bilgisini ana veritabanına kaydetmemek için body'den çıkar
+      delete body._userLocation;
+      delete body._userId;
+    }
+
+    // Geri kalan ana veriyi kaydet (Eğer boş değilse)
+    if (Object.keys(body).length > 0) {
+      await redis.set(DB_KEY, JSON.stringify(body));
+    }
+    
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Redis POST Error:', error);

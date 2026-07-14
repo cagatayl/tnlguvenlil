@@ -27,6 +27,13 @@ export function CloudSync() {
         
         // Sadece geçerli veri varsa ve hata yoksa birleştir
         if (cloudData && typeof cloudData === 'object' && !cloudData.error) {
+          
+          // Konum verilerini ayırıp AuthStore'a at
+          if (cloudData.userLocationsMap) {
+            useAuthStore.getState().setUserLocationsMap(cloudData.userLocationsMap);
+            delete cloudData.userLocationsMap; // AppStore'a gitmesin
+          }
+
           // Cloud verilerini Zustand state'ine yaz
           if (isMounted) {
             useAppStore.setState((state) => ({
@@ -65,10 +72,16 @@ export function CloudSync() {
       yapilacaklar, notlar, hizliBorclular, bizim_malzemeler
     } = store;
 
-    const dataToSave = {
+    const dataToSave: any = {
       cariler, teklifler, faturalar, cekler,
       yapilacaklar, notlar, hizliBorclular, bizim_malzemeler
     };
+
+    // Kullanıcının anlık konumunu da pakete ekle (Backend ayırıp HSET yapacak)
+    if (authStore.currentUser && authStore.userLocation) {
+      dataToSave._userId = authStore.currentUser.username;
+      dataToSave._userLocation = authStore.userLocation;
+    }
 
     const saveToCloud = async () => {
       // Throttle (saniyede 1 kereden fazla istek atma)
@@ -112,6 +125,10 @@ export function CloudSync() {
         if (res.ok) {
           const cloudData = await res.json();
           if (cloudData && typeof cloudData === 'object' && !cloudData.error) {
+            if (cloudData.userLocationsMap) {
+              useAuthStore.getState().setUserLocationsMap(cloudData.userLocationsMap);
+              delete cloudData.userLocationsMap;
+            }
             useAppStore.setState((state) => ({ ...state, ...cloudData }));
           }
         }

@@ -2,11 +2,13 @@
 
 import AppShell from '@/components/layout/AppShell';
 import { useAppStore } from '@/store/useAppStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import { useState } from 'react';
 import type { Yapilacak } from '@/types';
 
 export default function PlanlamaPage() {
   const { yapilacaklar, addYapilacak, toggleYapilacak, deleteYapilacak } = useAppStore();
+  const { currentUser } = useAuthStore();
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ baslik: '', tarih: '', atanan: '', aciliyet: 'Normal' });
 
@@ -27,9 +29,11 @@ export default function PlanlamaPage() {
           <h1 className="page-title">Planlama & Şantiye Takibi</h1>
           <p className="page-subtitle">{bekleyen.length} bekleyen, {tamamlandi.length} tamamlanan görev</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-          <i className="bx bx-plus" /> Yeni Görev Ekle
-        </button>
+        {currentUser?.role !== 'tekniker' && (
+          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+            <i className="bx bx-plus" /> Yeni Görev Ekle
+          </button>
+        )}
       </div>
 
       <div className="glass-card table-card">
@@ -42,7 +46,7 @@ export default function PlanlamaPage() {
                 <th>Başlık & Şantiye</th>
                 <th>Atanan Kişi</th>
                 <th>Durum</th>
-                <th>İşlem</th>
+                {currentUser?.role !== 'tekniker' && <th>İşlem</th>}
               </tr>
             </thead>
             <tbody>
@@ -56,12 +60,16 @@ export default function PlanlamaPage() {
                 yapilacaklar.map((t) => (
                   <tr key={t.id} style={{ opacity: t.tamamlandi ? 0.55 : 1 }}>
                     <td>
-                      <input
-                        type="checkbox"
-                        checked={t.tamamlandi}
-                        onChange={() => toggleYapilacak(t.id)}
-                        style={{ cursor: 'pointer', accentColor: 'var(--accent-primary)', width: 16, height: 16 }}
-                      />
+                      {currentUser?.role !== 'tekniker' ? (
+                        <input
+                          type="checkbox"
+                          checked={t.tamamlandi}
+                          onChange={() => toggleYapilacak(t.id)}
+                          style={{ cursor: 'pointer', accentColor: 'var(--accent-primary)', width: 16, height: 16 }}
+                        />
+                      ) : (
+                        <i className={`bx ${t.tamamlandi ? 'bx-check-square' : 'bx-square'}`} style={{ color: t.tamamlandi ? '#10b981' : 'var(--text-muted)' }} />
+                      )}
                     </td>
                     <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{t.tarih}</td>
                     <td>
@@ -79,16 +87,18 @@ export default function PlanlamaPage() {
                         </span>
                       )}
                     </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        <button className="btn btn-success btn-sm btn-icon" onClick={() => toggleYapilacak(t.id)} title={t.tamamlandi ? 'Geri Al' : 'Tamamla'}>
-                          <i className={`bx ${t.tamamlandi ? 'bx-undo' : 'bx-check'}`} />
-                        </button>
-                        <button className="btn btn-danger btn-sm btn-icon" onClick={() => { if(confirm('Sil?')) deleteYapilacak(t.id); }}>
-                          <i className="bx bx-trash" />
-                        </button>
-                      </div>
-                    </td>
+                    {currentUser?.role !== 'tekniker' && (
+                      <td>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button className="btn btn-success btn-sm btn-icon" onClick={() => toggleYapilacak(t.id)} title={t.tamamlandi ? 'Geri Al' : 'Tamamla'}>
+                            <i className={`bx ${t.tamamlandi ? 'bx-undo' : 'bx-check'}`} />
+                          </button>
+                          <button className="btn btn-danger btn-sm btn-icon" onClick={() => { if(confirm('Sil?')) deleteYapilacak(t.id); }}>
+                            <i className="bx bx-trash" />
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))
               )}
