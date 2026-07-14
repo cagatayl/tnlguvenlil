@@ -1,25 +1,40 @@
 import { NextResponse } from 'next/server';
-import { kv } from '@vercel/kv';
+import Redis from 'ioredis';
 
 const DB_KEY = 'tnl_muhasebe_cloud_db';
 
+// Use the URL provided by the user's Vercel Redis integration
+const redisUrl = process.env.KV_REST_API_REDIS_URL || '';
+const redis = redisUrl ? new Redis(redisUrl) : null;
+
 export async function GET() {
   try {
-    const data = await kv.get(DB_KEY);
-    return NextResponse.json(data || {});
+    if (!redis) {
+      console.warn('Redis URL is not configured');
+      return NextResponse.json({ error: 'Veritabanı yapılandırması eksik (KV_REST_API_REDIS_URL bulunamadı)' }, { status: 500 });
+    }
+    const data = await redis.get(DB_KEY);
+    // data is a JSON string in ioredis, so we need to parse it,
+    // but if it's already parsed, we handle it
+    const parsedData = data ? JSON.parse(data) : {};
+    return NextResponse.json(parsedData);
   } catch (error) {
-    console.error('KV GET Error:', error);
+    console.error('Redis GET Error:', error);
     return NextResponse.json({ error: 'Veritabanına ulaşılamadı' }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
+    if (!redis) {
+      return NextResponse.json({ error: 'Veritabanı yapılandırması eksik' }, { status: 500 });
+    }
     const body = await req.json();
-    await kv.set(DB_KEY, body);
+    // Save as JSON string
+    await redis.set(DB_KEY, JSON.stringify(body));
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('KV POST Error:', error);
+    console.error('Redis POST Error:', error);
     return NextResponse.json({ error: 'Veritabanına yazılamadı' }, { status: 500 });
   }
 }
