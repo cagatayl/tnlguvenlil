@@ -93,6 +93,7 @@ interface AppStore extends AppData {
 
   // Yapılacaklar
   addYapilacak: (todo: Yapilacak) => void;
+  updateYapilacak: (id: string, updates: Partial<Yapilacak>) => void;
   toggleYapilacak: (id: string) => void;
   deleteYapilacak: (id: string) => void;
   requestYapilacakOnay: (id: string, not: string) => void;
@@ -201,6 +202,13 @@ export const useAppStore = create<AppStore>()(
 
       addYapilacak: (todo) =>
         set((s) => ({ yapilacaklar: [...s.yapilacaklar, todo] })),
+
+      updateYapilacak: (id, updates) =>
+        set((s) => ({
+          yapilacaklar: s.yapilacaklar.map((t) =>
+            t.id === id ? { ...t, ...updates } : t
+          ),
+        })),
 
       toggleYapilacak: (id) =>
         set((s) => ({

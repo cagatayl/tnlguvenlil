@@ -8,21 +8,41 @@ import type { Yapilacak } from '@/types';
 
 export default function PlanlamaPage() {
   const { 
-    yapilacaklar, addYapilacak, toggleYapilacak, deleteYapilacak, 
+    yapilacaklar, addYapilacak, updateYapilacak, toggleYapilacak, deleteYapilacak, 
     requestYapilacakOnay, approveYapilacakOnay, rejectYapilacakOnay 
   } = useAppStore();
   const { currentUser } = useAuthStore();
   const [showModal, setShowModal] = useState(false);
   const [showTechModal, setShowTechModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
+  const [editTaskId, setEditTaskId] = useState<string | null>(null);
   const [techNote, setTechNote] = useState('');
   const [form, setForm] = useState({ baslik: '', tarih: '', atanan: '', aciliyet: 'Normal', etiket: 'Genel' });
 
   const handleSave = () => {
     if (!form.baslik) return alert('Başlık zorunludur!');
-    addYapilacak({ id: 'TSK-' + Date.now(), ...form, tamamlandi: false });
+    
+    if (editTaskId) {
+      updateYapilacak(editTaskId, form);
+    } else {
+      addYapilacak({ id: 'TSK-' + Date.now(), ...form, tamamlandi: false });
+    }
+    
     setShowModal(false);
+    setEditTaskId(null);
     setForm({ baslik: '', tarih: '', atanan: '', aciliyet: 'Normal', etiket: 'Genel' });
+  };
+
+  const handleEditClick = (t: Yapilacak) => {
+    setEditTaskId(t.id);
+    setForm({
+      baslik: t.baslik || '',
+      tarih: t.tarih || '',
+      atanan: t.atanan || '',
+      aciliyet: t.aciliyet || 'Normal',
+      etiket: t.etiket || 'Genel'
+    });
+    setShowModal(true);
   };
 
   const handleTechSave = () => {
@@ -95,7 +115,11 @@ export default function PlanlamaPage() {
           <p className="page-subtitle">{bekleyen.length} bekleyen, {tamamlandi.length} tamamlanan görev</p>
         </div>
         {currentUser?.role !== 'tekniker' && (
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+          <button className="btn btn-primary" onClick={() => {
+            setEditTaskId(null);
+            setForm({ baslik: '', tarih: '', atanan: '', aciliyet: 'Normal', etiket: 'Genel' });
+            setShowModal(true);
+          }}>
             <i className="bx bx-plus" /> Yeni Görev Ekle
           </button>
         )}
@@ -173,6 +197,9 @@ export default function PlanlamaPage() {
                               <button className="btn btn-success btn-sm btn-icon" onClick={() => toggleYapilacak(t.id)} title={t.tamamlandi ? 'Geri Al' : 'Tamamla'}>
                                 <i className={`bx ${t.tamamlandi ? 'bx-undo' : 'bx-check'}`} />
                               </button>
+                              <button className="btn btn-primary btn-sm btn-icon" onClick={() => handleEditClick(t)} title="Düzenle">
+                                <i className="bx bx-pencil" />
+                              </button>
                               <button className="btn btn-danger btn-sm btn-icon" onClick={() => { if(confirm('Sil?')) deleteYapilacak(t.id); }}>
                                 <i className="bx bx-trash" />
                               </button>
@@ -221,7 +248,7 @@ export default function PlanlamaPage() {
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="glass-card modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <span className="modal-title">Yeni Görev Ekle</span>
+              <span className="modal-title">{editTaskId ? 'Görevi Düzenle' : 'Yeni Görev Ekle'}</span>
               <button className="modal-close" onClick={() => setShowModal(false)}><i className="bx bx-x" /></button>
             </div>
             <div className="modal-body">
