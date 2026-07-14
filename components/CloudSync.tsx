@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuthStore } from '@/store/useAuthStore';
 
@@ -9,6 +9,7 @@ export function CloudSync() {
   const authStore = useAuthStore();
   const isInitialLoad = useRef(true);
   const lastSyncTime = useRef(Date.now());
+  const [syncStatus, setSyncStatus] = useState<'syncing' | 'synced' | 'error'>('syncing');
 
   // Buluttan veri çek
   useEffect(() => {
@@ -18,7 +19,10 @@ export function CloudSync() {
     const fetchFromCloud = async () => {
       try {
         const res = await fetch('/api/db');
-        if (!res.ok) return;
+        if (!res.ok) {
+          setSyncStatus('error');
+          return;
+        }
         const cloudData = await res.json();
         
         // Sadece geçerli veri varsa ve hata yoksa birleştir
@@ -28,14 +32,16 @@ export function CloudSync() {
             useAppStore.setState((state) => ({
               ...state,
               ...cloudData,
-              // Ürünler genelde JSON'dan gelir, onları ezmemeye dikkat edebiliriz
-              // Fakat kullanıcı eklediyse onları cloud'dan alalım.
             }));
+            setSyncStatus('synced');
             console.log('Buluttan veriler başarıyla eşitlendi.');
           }
+        } else {
+          setSyncStatus('error');
         }
       } catch (err) {
         console.error('Bulut veri çekme hatası:', err);
+        setSyncStatus('error');
       } finally {
         if (isMounted) {
           isInitialLoad.current = false;
@@ -69,14 +75,21 @@ export function CloudSync() {
       if (Date.now() - lastSyncTime.current < 1000) return;
       lastSyncTime.current = Date.now();
 
+      setSyncStatus('syncing');
       try {
-        await fetch('/api/db', {
+        const res = await fetch('/api/db', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(dataToSave),
         });
+        if (res.ok) {
+          setSyncStatus('synced');
+        } else {
+          setSyncStatus('error');
+        }
       } catch (err) {
         console.error('Buluta veri yazma hatası:', err);
+        setSyncStatus('error');
       }
     };
 
@@ -108,5 +121,28 @@ export function CloudSync() {
     return () => clearInterval(interval);
   }, [authStore.isAuthenticated]);
 
-  return null; // Arayüzde hiçbir şey göstermez, gizli çalışır
+  if (!authStore.isAuthenticated) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      bottom: 20,
+      right: 20,
+      background: syncStatus === 'error' ? '#ef4444' : syncStatus === 'syncing' ? '#eab308' : '#10b981',
+      color: '#fff',
+      padding: '8px 16px',
+      borderRadius: '20px',
+      fontSize: '0.8rem',
+      fontWeight: 600,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+      zIndex: 9999,
+      transition: 'all 0.3s ease'
+    }}>
+      <i className={`bx ${syncStatus === 'error' ? 'bx-error-circle' : syncStatus === 'syncing' ? 'bx-loader-alt bx-spin' : 'bx-cloud-upload'}`} style={{ fontSize: '1.2rem' }} />
+      {syncStatus === 'error' ? 'Veritabanı Hatası (KV Eksik)' : syncStatus === 'syncing' ? 'Buluta Kaydediliyor...' : 'Bulut ile Senkronize'}
+    </div>
+  );
 }
