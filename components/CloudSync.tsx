@@ -111,7 +111,7 @@ export function CloudSync() {
   }, [
     store.cariler, store.teklifler, store.faturalar, store.cekler,
     store.yapilacaklar, store.notlar, store.hizliBorclular, store.bizim_malzemeler,
-    authStore.isAuthenticated
+    authStore.isAuthenticated, authStore.userLocation
   ]);
 
   // Her 30 saniyede bir arka planda yenile

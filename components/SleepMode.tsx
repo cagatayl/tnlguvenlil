@@ -46,7 +46,7 @@ export function SleepMode() {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, isSleeping]);
+  }, [isAuthenticated]);
 
   if (!isSleeping || !isAuthenticated) return null;
 
