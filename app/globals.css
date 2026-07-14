@@ -1732,6 +1732,20 @@ body::before {
    MOBİL — Tablo → Kart ve Grid Düzenlemeleri
    ============================ */
 @media (max-width: 768px) {
+  /* Ana Layout ve Sidebar Optimizasyonu */
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+  .main-layout {
+    margin-left: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+  
   /* Başlıklar ve Butonlar */
   .page-header {
     flex-direction: column !important;
