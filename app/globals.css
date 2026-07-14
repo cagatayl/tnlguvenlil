@@ -1747,6 +1747,22 @@ body::before {
     flex: 1 1 auto;
     justify-content: center;
   }
+  
+  /* Topbar Optimizasyonu */
+  .rate-group {
+    display: none !important; /* Telefonda kurları gizle, yer kaplamasın */
+  }
+  .cur-toggle {
+    display: none !important; /* Telefonda para birimi seçiciyi gizle */
+  }
+  .topbar {
+    padding-left: 60px !important; /* Menü butonu için boşluk */
+    justify-content: flex-end !important; /* Elemanları sağa yasla */
+  }
+  .topbar-right {
+    width: 100%;
+    justify-content: flex-end;
+  }
 
   /* Inline Grid ve Çift Kolonları Teke Düşür */
   [style*="grid-template-columns: minmax"],
@@ -1837,7 +1853,6 @@ body::before {
 
 @media (max-width: 480px) {
   .stat-grid { grid-template-columns: 1fr !important; }
-  .topbar { padding-left: 54px !important; }
-  .topbar-right { gap: 4px !important; }
-  .cur-btn { padding: 3px 6px !important; font-size: 0.68rem !important; }
+  .topbar-right { gap: 8px !important; }
+  .topbar-btn { width: 36px !important; height: 36px !important; }
 }
