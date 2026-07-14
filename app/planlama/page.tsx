@@ -83,26 +83,29 @@ export default function PlanlamaPage() {
           }
           .planlama-table td {
             border: none;
-            position: relative;
-            padding-left: 50% !important;
+            border-bottom: 1px dashed rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px !important;
             text-align: right !important;
-            min-height: 30px;
+            min-height: 40px;
+          }
+          .planlama-table td:last-child {
+            border-bottom: none;
           }
           .planlama-table td:before {
-            position: absolute;
-            top: 12px;
-            left: 12px;
-            width: 45%;
-            padding-right: 10px;
-            white-space: nowrap;
-            text-align: left;
+            content: attr(data-label);
             font-weight: 600;
             color: var(--text-secondary);
-            content: attr(data-label);
+            margin-right: 15px;
+            text-align: left;
+            flex-shrink: 0;
           }
           .planlama-table td:first-child {
-            padding-left: 12px !important;
+            padding-left: 16px !important;
             text-align: left !important;
+            justify-content: flex-start;
           }
           .planlama-table td:first-child:before {
             content: none;
