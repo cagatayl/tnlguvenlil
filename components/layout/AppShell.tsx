@@ -11,11 +11,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <AuthGuard>
       <Sidebar />
-      <div className="layout-content">
+      <div className="main-layout">
         <Topbar />
         <CloudSync />
         <SleepMode />
-        <main className="main-content fade-up">{children}</main>
+        <main className="page-content fade-up">{children}</main>
       </div>
     </AuthGuard>
   );
