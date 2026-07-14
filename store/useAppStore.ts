@@ -95,6 +95,9 @@ interface AppStore extends AppData {
   addYapilacak: (todo: Yapilacak) => void;
   toggleYapilacak: (id: string) => void;
   deleteYapilacak: (id: string) => void;
+  requestYapilacakOnay: (id: string, not: string) => void;
+  approveYapilacakOnay: (id: string) => void;
+  rejectYapilacakOnay: (id: string) => void;
 
   // Notlar
   addNot: (not: Not) => void;
@@ -209,6 +212,27 @@ export const useAppStore = create<AppStore>()(
       deleteYapilacak: (id) =>
         set((s) => ({
           yapilacaklar: s.yapilacaklar.filter((t) => t.id !== id),
+        })),
+
+      requestYapilacakOnay: (id, not) =>
+        set((s) => ({
+          yapilacaklar: s.yapilacaklar.map((t) =>
+            t.id === id ? { ...t, onayBekliyor: true, teknikNot: not, teknikTarih: new Date().toISOString() } : t
+          ),
+        })),
+
+      approveYapilacakOnay: (id) =>
+        set((s) => ({
+          yapilacaklar: s.yapilacaklar.map((t) =>
+            t.id === id ? { ...t, onayBekliyor: false, tamamlandi: true } : t
+          ),
+        })),
+
+      rejectYapilacakOnay: (id) =>
+        set((s) => ({
+          yapilacaklar: s.yapilacaklar.map((t) =>
+            t.id === id ? { ...t, onayBekliyor: false } : t
+          ),
         })),
 
       addNot: (not) =>

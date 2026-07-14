@@ -105,6 +105,9 @@ export interface Yapilacak {
   atanan: string;
   aciliyet: string;
   tamamlandi: boolean;
+  onayBekliyor?: boolean;
+  teknikNot?: string;
+  teknikTarih?: string;
 }
 
 export interface Not {
