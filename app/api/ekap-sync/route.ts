@@ -105,23 +105,7 @@ export async function POST(req: Request) {
       return targetCities.includes(item.il) || item.il === 'TÜRKİYE';
     });
 
-    // Eğer hiç ihale bulunamadıysa bile boş kaydetmeyelim, ama listeyi kaydedelim
-    if (uniqueIhaleler.length === 0) {
-      // Belki de sayfa yapısı farklıdır, dom içindeki tüm h3/h4/a ları alalım
-      const allHeaders = $('h3, h4').toArray();
-      allHeaders.forEach(el => {
-        if($(el).text().trim().length > 10) {
-          uniqueIhaleler.push({
-            baslik: $(el).text().trim(),
-            kurum: 'Bulunamadı',
-            il: 'TÜRKİYE',
-            tarih: new Date().toLocaleDateString('tr-TR'),
-            sonTarih: '-',
-            link: url
-          });
-        }
-      });
-    }
+    // Yedek tarama mekanizması kaldırıldı.
 
     // public klasörüne JSON kaydet
     const filePath = path.join(process.cwd(), 'public', 'ekap-data.json');
