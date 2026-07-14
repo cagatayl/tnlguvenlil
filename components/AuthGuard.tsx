@@ -9,10 +9,36 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [hydrated, setHydrated] = useState(false);
+  const [locationStatus, setLocationStatus] = useState<'checking' | 'granted' | 'denied'>('checking');
 
   useEffect(() => {
     setHydrated(true);
   }, []);
+
+  useEffect(() => {
+    if (!hydrated || !store.isAuthenticated) return;
+
+    if (typeof navigator !== 'undefined' && 'geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setLocationStatus('granted');
+          useAuthStore.getState().setLocation({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            accuracy: pos.coords.accuracy,
+            timestamp: new Date().toISOString(),
+          });
+        },
+        (error) => {
+          console.error('Konum alınamadı:', error);
+          setLocationStatus('denied');
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    } else {
+      setLocationStatus('denied');
+    }
+  }, [hydrated, store.isAuthenticated]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -51,6 +77,28 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   if (!store.isAuthenticated) return null;
+
+  if (locationStatus === 'checking') {
+    return (
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        height: '100vh', background: '#060b18', flexDirection: 'column', gap: 16
+      }}>
+        <div style={{
+          width: 40, height: 40, border: '3px solid rgba(59,130,246,0.2)',
+          borderTopColor: '#3b82f6', borderRadius: '50%',
+          animation: 'spin 0.8s linear infinite'
+        }} />
+        <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>
+          Güvenlik: Konum kontrol ediliyor... Lütfen izin verin.
+        </span>
+      </div>
+    );
+  }
+
+  if (locationStatus === 'denied') {
+    return <LockedPage message="Güvenlik nedeniyle sisteme erişim için Konum (Lokasyon) izni vermeniz zorunludur. Lütfen tarayıcı ayarlarından konum izni verip sayfayı yenileyin." />;
+  }
 
   return <>{children}</>;
 }
