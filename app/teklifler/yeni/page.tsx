@@ -119,13 +119,12 @@ export default function YeniTeklifPage() {
     } as any;
     addTeklif(kayit);
     setKaydedildi(true);
-    alert('Teklif kaydedildi! Teklifler sayfasına yönlendiriliyorsunuz...');
-    router.push('/teklifler');
+    alert('Teklif başarıyla kaydedildi! "PDF Al" butonunu kullanarak teklifin PDF çıktısını alabilirsiniz.');
   };
 
   const handlePrint = () => {
-    alert('Lütfen teklifi kaydedip Teklifler sayfasından PDF yazdırın.');
-    router.push('/teklifler');
+    if (!kaydedildi) return;
+    window.open(`/api/teklifler/pdf?id=${teklifNo}`, '_blank');
   };
 
   // Noktalı input formatları
@@ -152,11 +151,11 @@ export default function YeniTeklifPage() {
             {canViewPDF && (
               <button
                 className={`btn btn-success ${!kaydedildi ? 'btn-disabled' : ''}`}
-                onClick={() => router.push('/teklifler')}
+                onClick={handlePrint}
                 disabled={!kaydedildi}
-                title={kaydedildi ? 'PDF oluşturmak için Teklifler sayfasına gidin' : 'Önce teklifi kaydedin'}
+                title={kaydedildi ? 'PDF Oluştur' : 'Önce teklifi kaydedin'}
               >
-                <i className="bx bxs-file-pdf" /> PDF {!kaydedildi && '(Önce Kaydet)'}
+                <i className="bx bxs-file-pdf" /> PDF Al {!kaydedildi && '(Önce Kaydet)'}
               </button>
             )}
             {isTeknik && kaydedildi && (
