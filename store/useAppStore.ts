@@ -283,7 +283,7 @@ export const useAppStore = create<AppStore>()(
       // Always use fresh categorized products from initialData.json
       // but preserve user-created data (teklifler, cariler, faturalar, notlar, yapilacaklar)
       merge: (persistedState, currentState) => {
-        const persisted = persistedState as Partial<AppData>;
+        const persisted = (persistedState as Partial<AppData>) || {};
         return {
           ...currentState,
           ...persisted,
