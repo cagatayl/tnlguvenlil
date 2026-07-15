@@ -71,8 +71,8 @@ export async function POST(req: NextRequest) {
     console.log("Generating PDF from", templateUrl);
 
     let browser;
-    if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
-      // Vercel / Production Environment
+    if (process.env.VERCEL) {
+      // Vercel Environment
       const chromium = (await import('@sparticuz/chromium')).default;
       const puppeteerCore = await import('puppeteer-core');
       
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
         headless: true,
       });
     } else {
-      // Local Development Environment
+      // Local Development or VDS Environment
       const puppeteer = (await import('puppeteer')).default;
       browser = await puppeteer.launch({ 
         headless: true,
