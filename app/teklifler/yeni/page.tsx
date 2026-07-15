@@ -41,6 +41,7 @@ export default function YeniTeklifPage() {
   });
   const [showPdf, setShowPdf] = useState(false);
   const [kaydedildi, setKaydedildi] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [teklifNo] = useState('TKL-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 9000 + 1000));
   const today = new Date().toLocaleDateString('tr-TR');
   const expiry = new Date(Date.now() + gecerlilik * 86400000).toLocaleDateString('tr-TR');
@@ -122,9 +123,77 @@ export default function YeniTeklifPage() {
     alert('Teklif başarıyla kaydedildi! "PDF Al" butonunu kullanarak teklifin PDF çıktısını alabilirsiniz.');
   };
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     if (!kaydedildi) return;
-    window.open(`/api/teklifler/pdf?id=${teklifNo}`, '_blank');
+    
+    const kayit = {
+      id: teklifNo,
+      tarih: new Date().toISOString().split('T')[0],
+      cariId: '',
+      cariUnvan: `${musteri.ad} ${musteri.soyad}`.trim() + (musteri.sirket ? ` / ${musteri.sirket}` : ''),
+      kalemler,
+      doviz,
+      tutarDoviz: genelToplamDoviz,
+      tutarTRY: convert(genelToplamDoviz, doviz, 'TRY'),
+      durum: 'Bekliyor' as const,
+      kategori: isTeknik ? 'Teknik Ekip Teklif Onayları' : 'Genel',
+      musteriAd: `${musteri.ad} ${musteri.soyad}`.trim(),
+      musteriSirket: musteri.sirket,
+      musteriTelefon: musteri.telefon,
+      musteriEmail: musteri.email,
+      olusturanKullanici: currentUser?.displayName || 'Bilinmiyor',
+    };
+
+    setIsGeneratingPdf(true);
+    try {
+      const referenceCategories = [
+        {
+          name: "Kurumlar & Bankalar",
+          items: [
+            { name: "T.C. Ziraat Bankası", logo: "assets/references/ziraatlogo.png" },
+            { name: "PTT", logo: "assets/references/pttlogo.png" },
+            { name: "TEİAŞ", logo: "assets/references/teiaslogo.png" }
+          ]
+        },
+        {
+          name: "Özel Sektör & Mağazalar",
+          items: [
+            { name: "Arabica Coffee House", logo: "assets/references/arabicalogo.png" },
+            { name: "Perra", logo: "assets/references/perralogo.png" },
+            { name: "Pembiş Home Concept", logo: "assets/references/pembislogo.png" }
+          ]
+        },
+        {
+          name: "Sağlık & Estetik",
+          items: [
+            { name: "MEF Dental", logo: "assets/references/mefdentallogo.png" }
+          ]
+        }
+      ];
+
+      const res = await fetch('/api/teklifler/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teklif: kayit, cari: musteri, referenceCategories })
+      });
+
+      if (!res.ok) throw new Error('PDF oluşturulamadı');
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Teklif_${teklifNo}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error(err);
+      alert('PDF oluşturulurken bir hata oluştu.');
+    } finally {
+      setIsGeneratingPdf(false);
+    }
   };
 
   // Noktalı input formatları
@@ -150,12 +219,13 @@ export default function YeniTeklifPage() {
             </button>
             {canViewPDF && (
               <button
-                className={`btn btn-success ${!kaydedildi ? 'btn-disabled' : ''}`}
+                className={`btn btn-success ${!kaydedildi || isGeneratingPdf ? 'btn-disabled' : ''}`}
                 onClick={handlePrint}
-                disabled={!kaydedildi}
+                disabled={!kaydedildi || isGeneratingPdf}
                 title={kaydedildi ? 'PDF Oluştur' : 'Önce teklifi kaydedin'}
               >
-                <i className="bx bxs-file-pdf" /> PDF Al {!kaydedildi && '(Önce Kaydet)'}
+                {isGeneratingPdf ? <i className="bx bx-loader-alt bx-spin" /> : <i className="bx bxs-file-pdf" />} 
+                {isGeneratingPdf ? ' Oluşturuluyor...' : ` PDF Al ${!kaydedildi ? '(Önce Kaydet)' : ''}`}
               </button>
             )}
             {isTeknik && kaydedildi && (
