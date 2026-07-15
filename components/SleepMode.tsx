@@ -8,7 +8,7 @@ export function SleepMode() {
   const [isSleeping, setIsSleeping] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const SLEEP_TIMEOUT = 20000; // 20 saniye
+  const SLEEP_TIMEOUT = 60000; // 60 saniye
 
   const resetTimer = () => {
     if (isSleeping) {

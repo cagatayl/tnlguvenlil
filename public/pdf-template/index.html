@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TNL Güvenlik - Fiyat Teklifi</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="toolbar no-print">
+    <strong>TNL Dinamik Teklif Şablonu</strong>
+    <button type="button" onclick="window.print()">PDF / Yazdır</button>
+  </div>
+  <main id="offer-root" aria-live="polite"></main>
+  <script src="data/sample-data.js"></script>
+  <script src="offer.js"></script>
+  <script>window.renderOffer(window.OFFER_DATA);</script>
+</body>
+</html>

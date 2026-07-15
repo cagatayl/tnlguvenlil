@@ -10,8 +10,68 @@ export default function TekliflerPage() {
   const { teklifler, cariler, updateTeklifDurum, deleteTeklif } = useAppStore();
   const { format, convert } = useCurrencyStore();
   const { can } = useAuthStore();
+  const [isGeneratingPdf, setIsGeneratingPdf] = React.useState<string | null>(null);
 
   const getCariBySId = (id: string) => cariler.find((c) => c.id === id);
+
+  const handleDownloadPdf = async (teklif: any, cari: any) => {
+    try {
+      setIsGeneratingPdf(teklif.id);
+      
+      // We also need the reference categories for the bottom of the PDF.
+      // We can fetch them from the sample-data or just hardcode the ones they wanted.
+      const referenceCategories = [
+        {
+          name: "Kamu & Kurumsal",
+          items: [
+            { name: "Ziraat Bankası", logo: "assets/references/ziraatlogo.png" },
+            { name: "PTT", logo: "assets/references/pttlogo.png" },
+            { name: "TEİAŞ", logo: "assets/references/teiaslogo.png" },
+            { name: "Gümrük AVM", logo: "assets/references/gümrüklogo.png" },
+            { name: "Kent Yatırım", logo: "assets/references/kentlogo.png" },
+            { name: "EİSGEM", logo: "assets/references/eisgamlogo.png" }
+          ]
+        },
+        {
+          name: "Yeme İçme & Perakende",
+          items: [
+            { name: "Arabica Coffee House", logo: "assets/references/arabicalogo.png" },
+            { name: "Perra", logo: "assets/references/perralogo.png" },
+            { name: "Pembiş Home Concept", logo: "assets/references/pembislogo.png" }
+          ]
+        },
+        {
+          name: "Sağlık & Estetik",
+          items: [
+            { name: "MEF Dental", logo: "assets/references/mefdentallogo.png" }
+          ]
+        }
+      ];
+
+      const res = await fetch('/api/teklifler/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teklif, cari, referenceCategories })
+      });
+
+      if (!res.ok) throw new Error('PDF oluşturulamadı');
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Teklif_${teklif.id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error(err);
+      alert('PDF oluşturulurken bir hata oluştu.');
+    } finally {
+      setIsGeneratingPdf(null);
+    }
+  };
 
   return (
     <AppShell>
@@ -106,10 +166,15 @@ export default function TekliflerPage() {
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button
                             className="btn btn-success btn-sm btn-icon"
-                            title="Yazdır / PDF"
-                            onClick={() => window.print()}
+                            title="Yazdır / PDF İndir"
+                            disabled={isGeneratingPdf === t.id}
+                            onClick={() => handleDownloadPdf(t, cari)}
                           >
-                            <i className="bx bxs-file-pdf" />
+                            {isGeneratingPdf === t.id ? (
+                              <i className="bx bx-loader-alt bx-spin" />
+                            ) : (
+                              <i className="bx bxs-file-pdf" />
+                            )}
                           </button>
                           <button
                             className="btn btn-danger btn-sm btn-icon"
