@@ -8,7 +8,19 @@ import type {
 } from '@/types';
 import initialDataJson from '@/lib/initialData.json';
 
-const INITIAL_DATA = initialDataJson as unknown as AppData;
+const INITIAL_DATA_RAW = initialDataJson as any;
+
+const INITIAL_DATA: AppData = {
+  ...INITIAL_DATA_RAW,
+  teklifler: INITIAL_DATA_RAW.teklifler || [],
+  cariler: INITIAL_DATA_RAW.cariler || [],
+  faturalar: INITIAL_DATA_RAW.faturalar || [],
+  cekler: INITIAL_DATA_RAW.cekler || [],
+  yapilacaklar: INITIAL_DATA_RAW.yapilacaklar || [],
+  notlar: INITIAL_DATA_RAW.notlar || [],
+  bizim_malzemeler: INITIAL_DATA_RAW.bizim_malzemeler || [],
+  ticari_urunler: INITIAL_DATA_RAW.ticari_urunler || [],
+};
 const DB_KEY = 'TNL_MUHASEBE_DB'; // Same key as old app — preserves existing data
 
 export const INITIAL_HIZLI_BORCLULAR: HizliBorclu[] = [
@@ -158,50 +170,50 @@ export const useAppStore = create<AppStore>()(
         })),
 
       addCari: (cari) =>
-        set((s) => ({ cariler: [...s.cariler, cari] })),
+        set((s) => ({ cariler: [...(s.cariler || []), cari] })),
 
       updateCari: (id, cari) =>
         set((s) => ({
-          cariler: s.cariler.map((c) => (c.id === id ? { ...c, ...cari } : c)),
+          cariler: (s.cariler || []).map((c) => (c.id === id ? { ...c, ...cari } : c)),
         })),
 
       deleteCari: (id) =>
-        set((s) => ({ cariler: s.cariler.filter((c) => c.id !== id) })),
+        set((s) => ({ cariler: (s.cariler || []).filter((c) => c.id !== id) })),
 
       addTeklif: (teklif) =>
-        set((state) => ({ teklifler: [teklif, ...state.teklifler] })),
+        set((state) => ({ teklifler: [teklif, ...(state.teklifler || [])] })),
 
       updateTeklifDurum: (id, durum) =>
         set((state) => ({
-          teklifler: state.teklifler.map((t) => (t.id === id ? { ...t, durum } : t)),
+          teklifler: (state.teklifler || []).map((t) => (t.id === id ? { ...t, durum } : t)),
         })),
 
       deleteTeklif: (id) =>
         set((state) => ({
-          teklifler: state.teklifler.filter((t) => t.id !== id),
+          teklifler: (state.teklifler || []).filter((t) => t.id !== id),
         })),
 
       addFatura: (fatura) =>
-        set((s) => ({ faturalar: [fatura, ...s.faturalar] })),
+        set((s) => ({ faturalar: [fatura, ...(s.faturalar || [])] })),
 
       updateFaturaDurum: (id, durum) =>
         set((s) => ({
-          faturalar: s.faturalar.map((f) => f.id === id ? { ...f, durum } : f),
+          faturalar: (s.faturalar || []).map((f) => f.id === id ? { ...f, durum } : f),
         })),
 
       deleteFatura: (id) =>
-        set((s) => ({ faturalar: s.faturalar.filter((f) => f.id !== id) })),
+        set((s) => ({ faturalar: (s.faturalar || []).filter((f) => f.id !== id) })),
 
       addCek: (cek) =>
-        set((s) => ({ cekler: [cek, ...s.cekler] })),
+        set((s) => ({ cekler: [cek, ...(s.cekler || [])] })),
 
       updateCekDurum: (id, durum) =>
         set((s) => ({
-          cekler: s.cekler.map((c) => c.id === id ? { ...c, durum } : c),
+          cekler: (s.cekler || []).map((c) => c.id === id ? { ...c, durum } : c),
         })),
 
       addYapilacak: (todo) =>
-        set((s) => ({ yapilacaklar: [...s.yapilacaklar, todo] })),
+        set((s) => ({ yapilacaklar: [...(s.yapilacaklar || []), todo] })),
 
       updateYapilacak: (id, updates) =>
         set((s) => ({
@@ -238,16 +250,16 @@ export const useAppStore = create<AppStore>()(
 
       rejectYapilacakOnay: (id) =>
         set((s) => ({
-          yapilacaklar: s.yapilacaklar.map((t) =>
+          yapilacaklar: (s.yapilacaklar || []).map((t) =>
             t.id === id ? { ...t, onayBekliyor: false } : t
           ),
         })),
 
       addNot: (not) =>
-        set((s) => ({ notlar: [...s.notlar, not] })),
+        set((s) => ({ notlar: [...(s.notlar || []), not] })),
 
       deleteNot: (id) =>
-        set((s) => ({ notlar: s.notlar.filter((n) => n.id !== id) })),
+        set((s) => ({ notlar: (s.notlar || []).filter((n) => n.id !== id) })),
 
       addHizliBorclu: (item) =>
         set((s) => ({ hizliBorclular: [item, ...(s.hizliBorclular || [])] })),
@@ -275,6 +287,12 @@ export const useAppStore = create<AppStore>()(
         return {
           ...currentState,
           ...persisted,
+          teklifler: persisted.teklifler || currentState.teklifler || [],
+          cariler: persisted.cariler || currentState.cariler || [],
+          faturalar: persisted.faturalar || currentState.faturalar || [],
+          cekler: persisted.cekler || currentState.cekler || [],
+          yapilacaklar: persisted.yapilacaklar || currentState.yapilacaklar || [],
+          notlar: persisted.notlar || currentState.notlar || [],
           // Always reload products with fresh categories from file
           ticari_urunler: INITIAL_DATA.ticari_urunler,
           // Preserve initial bizim_malzemeler only if user has none
