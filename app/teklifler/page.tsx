@@ -1,5 +1,7 @@
 'use client';
 
+import React, { useState } from 'react';
+
 import AppShell from '@/components/layout/AppShell';
 import { useAppStore } from '@/store/useAppStore';
 import { useCurrencyStore } from '@/store/useCurrencyStore';
@@ -10,7 +12,7 @@ export default function TekliflerPage() {
   const { teklifler, cariler, updateTeklifDurum, deleteTeklif } = useAppStore();
   const { format, convert } = useCurrencyStore();
   const { can } = useAuthStore();
-  const [isGeneratingPdf, setIsGeneratingPdf] = React.useState<string | null>(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState<string | null>(null);
 
   const getCariBySId = (id: string) => cariler.find((c) => c.id === id);
 
